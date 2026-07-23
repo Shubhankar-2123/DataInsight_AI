@@ -1,8 +1,10 @@
 import streamlit as st
+import pandas as pd
 
 from src.loader import load_dataset
 from src.validator import validate_dataset
 from src.profiler import get_dataset_overview
+from src.quality import analyze_data_quality
 
 # --------------------------------------------------
 # Page Configuration
@@ -111,8 +113,64 @@ else:
             st.write(f"**Rows:** {df.shape[0]}")
             st.write(f"**Columns:** {df.shape[1]}")
         with quality_tab:
+            quality = analyze_data_quality(df)
             st.subheader("🧹 Data Quality")
-            st.info("This section will show missing values, duplicates, and other quality checks.")
+            
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.metric(
+                    "Missing Values",
+                    int(quality["missing_values"].sum())
+                )
+
+            with col2:
+                st.metric(
+                    "Duplicate Rows",
+                    quality["duplicate_rows"]
+                )
+
+            st.divider()
+            missing_df = quality["missing_values"]
+
+            missing_df = missing_df[missing_df > 0]
+
+            if not missing_df.empty:
+
+                st.write("### Missing Values by Column")
+
+                st.dataframe(
+                    missing_df.rename("Missing Count")
+                )
+
+            else:
+
+                st.success("✅ No missing values found.")
+
+            if quality["empty_columns"]:
+
+                st.warning("### Empty Columns")
+
+                st.write(quality["empty_columns"])
+
+            else:
+
+                st.success("✅ No empty columns.")
+
+            if quality["constant_columns"]:
+
+                st.warning("### Constant Columns")
+
+                constant_df = pd.DataFrame(
+                    {"Column Name": quality["constant_columns"]}
+                )
+
+                st.dataframe(constant_df, use_container_width=True)
+
+            else:
+
+                st.success("✅ No constant columns.")
 
         with statistics_tab:
             st.subheader("📈 Statistical Analysis")
