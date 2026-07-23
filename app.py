@@ -6,6 +6,15 @@ from src.validator import validate_dataset
 from src.profiler import get_dataset_overview
 from src.quality import analyze_data_quality
 from src.statistics import generate_statistics
+from src.visualization import (
+    create_histogram,
+    create_boxplot,
+    create_correlation_heatmap,
+    create_scatter_plot,
+    create_bar_chart,
+    create_line_chart,
+    detect_datetime_columns,
+)
 
 # --------------------------------------------------
 # Page Configuration
@@ -109,7 +118,7 @@ else:
 
             # dataset preivew
             st.subheader("Dataset Preview")
-            st.dataframe(df.head(), use_container_width=True)
+            st.dataframe(df.head(), width='stretch')
             st.write(f"**File Name:** {uploaded_file.name}")
             st.write(f"**Rows:** {df.shape[0]}")
             st.write(f"**Columns:** {df.shape[1]}")
@@ -167,7 +176,7 @@ else:
                     {"Column Name": quality["constant_columns"]}
                 )
 
-                st.dataframe(constant_df, use_container_width=True)
+                st.dataframe(constant_df, width=True)
 
             else:
 
@@ -190,13 +199,162 @@ else:
 
                 st.dataframe(
                     statistics_df,
-                    use_container_width=True
+                    width='stretch'
                 )
 
         with charts_tab:
+            
             st.subheader("📊 Visualizations")
-            st.info("Interactive charts will appear here.")            
+            numeric_columns = df.select_dtypes(include="number").columns
+            selected_column = st.selectbox(
+                "Select Numeric Column",
+                numeric_columns
+            )
 
+            st.subheader("📈 Histogram")
+            histogram = create_histogram(
+                df,
+                selected_column
+            )
+
+            st.plotly_chart(
+                histogram,
+                width='stretch',
+                key="histogram"
+            )
+
+
+            st.subheader("📦 Box Plot")
+            box_plot = create_boxplot(
+                df,
+                selected_column
+            )
+
+            st.plotly_chart(
+                box_plot,
+                width="stretch",
+                key="boxplot"
+            )
+
+            st.subheader("🔥 Correlation Heatmap")
+
+            heatmap = create_correlation_heatmap(df)
+
+            if heatmap:
+                st.plotly_chart(
+                    heatmap,
+                    width="stretch",
+                    key="heatmap"
+                )
+            else:
+                st.info("Need at least two numeric columns to generate a correlation heatmap.")
+            st.subheader("📈 Scatter Plot")
+
+            numeric_columns = df.select_dtypes(include="number").columns.tolist()
+
+            if len(numeric_columns) >= 2:
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    x_column = st.selectbox(
+                        "X-Axis",
+                        numeric_columns,
+                        key="scatter_x"
+                    )
+
+                with col2:
+                    y_column = st.selectbox(
+                        "Y-Axis",
+                        numeric_columns,
+                        index=1,
+                        key="scatter_y"
+                    )
+                
+                if x_column == y_column:
+                    st.warning("Please select two different columns.")
+                else:
+                   
+
+                    scatter = create_scatter_plot(
+                        df,
+                        x_column,
+                        y_column
+                    )
+
+                    st.plotly_chart(
+                        scatter,
+                        width="stretch",
+                        key="scatter"
+                    )
+
+            else:
+                st.info("Need at least two numeric columns for a scatter plot.")
+
+
+            st.subheader("📊 Categorical Distribution")
+
+            categorical_columns = (
+                df.select_dtypes(
+                    include=["object", "string", "category"]
+                ).columns.tolist()
+            )
+
+            if categorical_columns:
+
+                selected_category = st.selectbox(
+                    "Select Categorical Column",
+                    categorical_columns,
+                    key="bar_chart"
+                )
+
+                bar_fig = create_bar_chart(
+                    df,
+                    selected_category
+                )
+
+                st.plotly_chart(
+                    bar_fig,
+                    width="stretch",
+                    key="bar"
+                )
+
+            else:
+                st.info("No categorical columns found.")
+            
+            datetime_columns = detect_datetime_columns(df)
+
+            st.subheader("📈 Time Series")
+
+            if datetime_columns:
+
+                date_column = st.selectbox(
+                    "Date Column",
+                    datetime_columns,
+                    key="date_column"
+                )
+
+                value_column = st.selectbox(
+                    "Numeric Value",
+                    numeric_columns,
+                    key="value_column"
+                )
+
+                line_chart = create_line_chart(
+                    df,
+                    date_column,
+                    value_column
+                )
+
+                st.plotly_chart(
+                    line_chart,
+                    width="stretch",
+                    key="line_chart"
+                )
+
+            else:
+
+                st.info("No datetime columns detected.")
         with insights_tab:
             st.subheader("💡 AI Insights")
             st.info("Automatically generated insights and stories will appear here.")
