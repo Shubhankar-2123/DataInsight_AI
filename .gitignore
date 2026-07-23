@@ -1,0 +1,18 @@
+# Python environment files
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Data & Large Files (Crucial for dataset projects)
+*.csv
+*.xlsx
+*.json
+*.datasets/
+.env
+
+# Code Editor settings
+.vscode/
+.idea/
+.DS_Store
