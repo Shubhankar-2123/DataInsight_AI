@@ -144,6 +144,7 @@ def create_line_chart(df: pd.DataFrame, date_column: str, value_column: str):
 
     return fig
 
+
 def detect_datetime_columns(df: pd.DataFrame):
     """
     Detect datetime columns, including those stored as strings.
@@ -153,27 +154,35 @@ def detect_datetime_columns(df: pd.DataFrame):
 
     for column in df.columns:
 
-        # Already a datetime column
+
         if pd.api.types.is_datetime64_any_dtype(df[column]):
             datetime_columns.append(column)
             continue
 
-        # Try parsing text columns
-        if pd.api.types.is_object_dtype(df[column]) or pd.api.types.is_string_dtype(df[column]):
+        if not (
+            pd.api.types.is_object_dtype(df[column])
+            or pd.api.types.is_string_dtype(df[column])
+        ):
+            continue
 
-            try:
-                parsed = pd.to_datetime(
-                    df[column],
-                    errors="coerce"
-                )
+        series = df[column].dropna()
 
-                success_rate = parsed.notna().mean()
+        if series.empty:
+            continue
 
-                # At least 80% of the values should be valid dates
-                if success_rate >= 0.8:
-                    datetime_columns.append(column)
+        try:
+            parsed = pd.to_datetime(
+                series,
+                errors="coerce",
+                format="mixed"
+            )
 
-            except Exception:
-                pass
+            success_rate = parsed.notna().mean()
+
+            if success_rate >= 0.8:
+                datetime_columns.append(column)
+
+        except Exception:
+            continue
 
     return datetime_columns

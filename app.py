@@ -15,6 +15,8 @@ from src.visualization import (
     create_line_chart,
     detect_datetime_columns,
 )
+from src.insights import generate_dataset_insights
+from src.llm import generate_ai_report
 
 # --------------------------------------------------
 # Page Configuration
@@ -356,8 +358,43 @@ else:
 
                 st.info("No datetime columns detected.")
         with insights_tab:
-            st.subheader("💡 AI Insights")
-            st.info("Automatically generated insights and stories will appear here.")
+            analysis = generate_dataset_insights(df)
             
+            
+            st.subheader("💡 AI Dataset Insights")
+
+            for insight in analysis["insights"]:
+
+                if insight["type"] == "success":
+                    st.success(insight["message"])
+
+                elif insight["type"] == "warning":
+                    st.warning(insight["message"])
+
+                elif insight["type"] == "error":
+                    st.error(insight["message"])
+
+                else:
+                    st.info(insight["message"])
+           
+            st.divider()
+
+            st.subheader("🤖 AI Business Report")
+
+            if st.button("Generate Report"):
+
+                with st.spinner("Generating report..."):
+
+                    report = generate_ai_report(
+                        analysis["story_context"]
+                    )
+
+                st.markdown(report)
+
+            with st.expander("Developer View"):
+
+                st.json(analysis["story_context"])
     except Exception as e:
             st.error(f"Error loading dataset: {e}")
+
+
