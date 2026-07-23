@@ -2,6 +2,7 @@ import streamlit as st
 
 from src.loader import load_dataset
 from src.validator import validate_dataset
+from src.profiler import get_dataset_overview
 
 # --------------------------------------------------
 # Page Configuration
@@ -53,7 +54,10 @@ if uploaded_file is None:
 
 else:
     try:
+        # Loading dataset
         df = load_dataset(uploaded_file)
+
+        # dataset validation
         is_valid, message = validate_dataset(df)
 
         if not is_valid:
@@ -64,8 +68,32 @@ else:
 
         st.success("Dataset loaded successfully!")
 
-        st.subheader("Dataset Preview")
+        # dataset overview
+        overview = get_dataset_overview(df)
+        st.subheader("📊 Dataset Overview")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Rows", overview["rows"])
 
+        with col2:
+            st.metric("Columns", overview["columns"])
+
+        with col3:
+            st.metric("Memory (MB)", overview["memory_usage"])
+
+        col4, col5, col6 = st.columns(3)
+
+        with col4:
+            st.metric("Numeric", overview["numeric_columns"])
+
+        with col5:
+            st.metric("Categorical", overview["categorical_columns"])
+
+        with col6:
+            st.metric("Datetime", overview["datetime_columns"])
+
+        # dataset preivew
+        st.subheader("Dataset Preview")
         st.dataframe(df.head())
         st.write(f"**File Name:** {uploaded_file.name}")
         st.write(f"**Rows:** {df.shape[0]}")
