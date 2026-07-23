@@ -1,6 +1,7 @@
 import streamlit as st
 
 from src.loader import load_dataset
+from src.validator import validate_dataset
 
 # --------------------------------------------------
 # Page Configuration
@@ -53,6 +54,13 @@ if uploaded_file is None:
 else:
     try:
         df = load_dataset(uploaded_file)
+        is_valid, message = validate_dataset(df)
+
+        if not is_valid:
+            st.error(message)
+            st.stop()
+
+        st.success(message)
 
         st.success("Dataset loaded successfully!")
 
@@ -62,6 +70,9 @@ else:
         st.write(f"**File Name:** {uploaded_file.name}")
         st.write(f"**Rows:** {df.shape[0]}")
         st.write(f"**Columns:** {df.shape[1]}")
+
+
+        
 
     except Exception as e:
         st.error(f"Error loading dataset: {e}")
