@@ -5,6 +5,7 @@ from src.loader import load_dataset
 from src.validator import validate_dataset
 from src.profiler import get_dataset_overview
 from src.quality import analyze_data_quality
+from src.statistics import generate_statistics
 
 # --------------------------------------------------
 # Page Configuration
@@ -173,8 +174,24 @@ else:
                 st.success("✅ No constant columns.")
 
         with statistics_tab:
+            statistics_df = generate_statistics(df)
             st.subheader("📈 Statistical Analysis")
-            st.info("Statistical summaries will be displayed here.")
+        
+            
+            if statistics_df.empty:
+
+                st.warning("No numeric columns found in the dataset.")
+
+            else:
+                st.metric(
+                "Numeric Columns Analysed",
+                statistics_df.shape[0]
+                )
+
+                st.dataframe(
+                    statistics_df,
+                    use_container_width=True
+                )
 
         with charts_tab:
             st.subheader("📊 Visualizations")
